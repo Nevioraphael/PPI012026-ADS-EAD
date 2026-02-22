@@ -1,0 +1,21 @@
+{
+  "name": "ppi012026-ads-ead",
+  "version": "1.0.0",
+  "description": "Projeto desnvolvido na primeira aula ao vivo da disciplina de PPI (NodeJS + express)",
+  "homepage": "https://github.com/Nevioraphael/PPI012026-ADS-EAD#readme",
+  "bugs": {
+    "url": "https://github.com/Nevioraphael/PPI012026-ADS-EAD/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nevioraphael/PPI012026-ADS-EAD.git"
+  },
+  "license": "ISC",
+  "author": "Nevio Raphael",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
