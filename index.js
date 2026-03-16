@@ -29,7 +29,6 @@ app.use(express.urlencoded({extended: true}));
 //Todo o conteúdo do direório Views/public estará disponível na raiz do servidor
 app.use(express.static('./Views/public'));
 
-
 app.post("/login", (requisicao, resposta) => {
     //precisa extrair os dados da requisição
     //os dados estão armazenados no corpo da requisição
