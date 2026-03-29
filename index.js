@@ -2,24 +2,26 @@ import express from 'express';
 import autenticar from './seguranca/autenticador.js';
 import session from 'express-session';
 
+//configurações do servidor
 const host = "0.0.0.0"; //requisições podem vir de todas as interfaces do host local
 const porta = 3000; //identifica unica e exclusivamente uma aplicação nesse host
+const session_secret = 'minh4ch@v&s3cr&t@'
+const session_duration = 1000 * 60 * 15; // 15 minutos
+
 const app = express();
+
+//configurações da sessão do usuário
 app.use(session({
-    secret: 'minh4ch@v&s3cr&t@',
+    secret: session_secret, //chave secreta para assinar o cookie de sessão
     resave: false, 
     saveUninitialized: true,
     cookie: {
         secure: false,
         httpOnly: true,
-        maxAge: 1000 * 60 * 15 // 15 minutos de sessão
+        maxAge: session_duration
     }
 }
 ));
-
-//HTTP não distingue usuários
-//Para que ele tenha a capacidade de identificar usuários, precisamos utilizar cookies de sessão
-//Criando uma sessão para cada usuário autenticado
 
 //escolher a biblioteca que irá processar os parâmetros da reposição
 //queryString - extended = false
@@ -57,4 +59,5 @@ app.use(autenticar,express.static('./Views/private'));
 
 app.listen(porta, host, () => { //arrow function
     console.log(`Servidor rodando em http://${host}:${porta}`);
-}) //javascript aceita funções como parâmetros de outras funções
+}) //javascript aceita funções como parâmetros de outras funções//
+
