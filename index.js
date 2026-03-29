@@ -1,63 +1,66 @@
 import express from 'express';
-import autenticar from './seguranca/autenticador.js';
 import session from 'express-session';
+import mysql from 'mysql2/promise';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-//configurações do servidor
-const host = "0.0.0.0"; //requisições podem vir de todas as interfaces do host local
-const porta = 3000; //identifica unica e exclusivamente uma aplicação nesse host
-const session_secret = 'minh4ch@v&s3cr&t@'
-const session_duration = 1000 * 60 * 15; // 15 minutos
+const host = "0.0.0.0";
+const porta = 3000;
+const session_secret = 'minh4ch@v3s3cr3t@';
+const session_duration = 1000 * 60 * 15;
 
 const app = express();
 
-//configurações da sessão do usuário
+// Configuração da sessão
 app.use(session({
-    secret: session_secret, //chave secreta para assinar o cookie de sessão
-    resave: false, 
+    secret: session_secret,
+    resave: false,
     saveUninitialized: true,
-    cookie: {
-        secure: false,
-        httpOnly: true,
-        maxAge: session_duration
-    }
-}
-));
+    cookie: { secure: false, httpOnly: true, maxAge: session_duration }
+}));
 
-//escolher a biblioteca que irá processar os parâmetros da reposição
-//queryString - extended = false
-//qs - extended = true
-app.use(express.urlencoded({extended: true}));
-
-//Todo o conteúdo do direório Views/public estará disponível na raiz do servidor
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // importante para JSON no fetch
 app.use(express.static('./Views/public'));
 
-app.post("/login", (requisicao, resposta) => {
-    //precisa extrair os dados da requisição
-    //os dados estão armazenados no corpo da requisição
-    const usuario = requisicao.body.usuario;
-    const senha = requisicao.body.senha;
-    if (usuario === "admin" && senha === "123") {
-        //atualizar a sessão do usuário
-        requisicao.session.usuarioLogado = true;
-        resposta.redirect("/menu.html");
-    } else {
-        resposta.redirect("/login.html");
-    }
+// Configuração do MySQL
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'seu_usuario',
+    password: 'sua_senha',
+    database: 'cadastrodb'
 });
 
-app.get("/login", (requisicao, resposta) => {
-    resposta.redirect("/login.html");
+// Rotas CRUD
+app.get("/usuarios", async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM usuarios");
+    res.json(rows);
 });
 
-app.get("/logout", (requisicao, resposta) => {
-    requisicao.session.destroy();
-    resposta.redirect("/login.html");
+app.post("/usuarios", async (req, res) => {
+    const { nome, email } = req.body;
+    if (!nome || !email) return res.status(400).json({ erro: "Nome e email obrigatórios." });
+
+    const [result] = await pool.query("INSERT INTO usuarios (nome, email) VALUES (?, ?)", [nome, email]);
+    res.json({ mensagem: "Usuário cadastrado!", id: result.insertId });
 });
 
-//middleware
-app.use(autenticar,express.static('./Views/private'));
+app.put("/usuarios/:id", async (req, res) => {
+    const { nome, email } = req.body;
+    const id = req.params.id;
+    const [result] = await pool.query("UPDATE usuarios SET nome=?, email=? WHERE id=?", [nome, email, id]);
+    if (result.affectedRows === 0) return res.status(404).json({ erro: "Usuário não encontrado." });
+    res.json({ mensagem: "Usuário atualizado!" });
+});
 
-app.listen(porta, host, () => { //arrow function
+app.delete("/usuarios/:id", async (req, res) => {
+    const id = req.params.id;
+    const [result] = await pool.query("DELETE FROM usuarios WHERE id=?", [id]);
+    if (result.affectedRows === 0) return res.status(404).json({ erro: "Usuário não encontrado." });
+    res.json({ mensagem: "Usuário removido!" });
+});
+
+// Inicialização
+app.listen(porta, host, () => {
     console.log(`Servidor rodando em http://${host}:${porta}`);
-}) //javascript aceita funções como parâmetros de outras funções//
-
+});

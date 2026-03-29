@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Usuários</title>
+</head>
+<body>
+    <h1>Cadastro de Usuários</h1>
+
+    <form id="formCadastro">
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <p id="feedback"></p>
+
+    <h2>Lista de Usuários</h2>
+    <table border="1" id="tabelaUsuarios">
+        <thead>
+            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Ações</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const form = document.getElementById("formCadastro");
+        const feedback = document.getElementById("feedback");
+        const tabela = document.querySelector("#tabelaUsuarios tbody");
+
+        // Função para atualizar tabela
+        async function carregarUsuarios() {
+            const res = await fetch("/usuarios");
+            const dados = await res.json();
+            tabela.innerHTML = "";
+            dados.forEach(u => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${u.id}</td>
+                    <td>${u.nome}</td>
+                    <td>${u.email}</td>
+                    <td>
+                        <button onclick="editarUsuario(${u.id})">Editar</button>
+                        <button onclick="deletarUsuario(${u.id})">Excluir</button>
+                    </td>
+                `;
+                tabela.appendChild(tr);
+            });
+        }
+
+        // POST - cadastrar
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const nome = document.getElementById("nome").value;
+            const email = document.getElementById("email").value;
+
+            if (!nome || !email) {
+                feedback.textContent = "Preencha todos os campos!";
+                return;
+            }
+
+            const res = await fetch("/usuarios", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ nome, email })
+            });
+            const dados = await res.json();
+            feedback.textContent = dados.mensagem || dados.erro;
+            carregarUsuarios();
+            form.reset();
+        });
+
+        // PUT - editar
+        async function editarUsuario(id) {
+            const nome = prompt("Novo nome:");
+            const email = prompt("Novo email:");
+            if (!nome || !email) return;
+
+            const res = await fetch(`/usuarios/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ nome, email })
+            });
+            const dados = await res.json();
+            feedback.textContent = dados.mensagem || dados.erro;
+            carregarUsuarios();
+        }
+
+        // DELETE - excluir
+        async function deletarUsuario(id) {
+            const res = await fetch(`/usuarios/${id}`, { method: "DELETE" });
+            const dados = await res.json();
+            feedback.textContent = dados.mensagem || dados.erro;
+            carregarUsuarios();
+        }
+
+        // Inicializa tabela
+        carregarUsuarios();
+    </script>
+</body>
+</html>
